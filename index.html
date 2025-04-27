@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Ultimate Pimped-Out Quiz Game</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Google Fonts for style -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
+    <style>
+        :root {
+            --primary: #6d28d9;
+            --secondary: #06b6d4;
+            --accent: #f59e42;
+            --success: #10b981;
+            --danger: #ef4444;
+            --glass: rgba(255,255,255,0.22);
+            --glass-border: rgba(255,255,255,0.35);
+        }
+        html, body {
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: linear-gradient(120deg, #6d28d9 0%, #06b6d4 100%);
+            background-size: 200% 200%;
+            animation: gradientMove 8s ease-in-out infinite alternate;
+            font-family: 'Montserrat', 'Segoe UI', Arial, sans-serif;
+            color: #222;
+            overflow-x: hidden;
+        }
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+        }
+        .quiz-container {
+            max-width: 480px;
+            margin: 2.5rem auto;
+            background: var(--glass);
+            border-radius: 28px;
+            box-shadow: 0 12px 48px 0 #0002, 0 1.5px 0 var(--glass-border) inset;
+            backdrop-filter: blur(18px) saturate(160%);
+            padding: 2.2rem 1.2rem 2rem 1.2rem;
+            position: relative;
+            border: 2.5px solid var(--glass-border);
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.2rem;
+        }
+        .avatar {
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 3px solid #fff;
+            box-shadow: 0 0 0 0 var(--accent), 0 0 18px 3px #fff8;
+            background: linear-gradient(135deg, var(--primary) 60%, var(--secondary) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            color: #fff;
+            animation: avatarPulse 2s infinite alternate;
+        }
+        @keyframes avatarPulse {
+            0% { box-shadow: 0 0 0 0 var(--accent), 0 0 18px 3px #fff8; }
+            100% { box-shadow: 0 0 18px 6px var(--accent), 0 0 28px 6px #fff8; }
+        }
+        .score-timer {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+        .score {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        .timer {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--secondary);
+        }
+        .progress-wrap {
+            margin: 1.2rem 0 0.7rem 0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .progress-bar {
+            flex: 1;
+            height: 10px;
+            background: #e0e7ef;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary), var(--primary));
+            width: 0;
+            transition: width 0.4s cubic-bezier(.42,0,.58,1);
+        }
+        .question-count {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--accent);
+            background: #fff8;
+            padding: 2px 13px;
+            border-radius: 8px;
+        }
+        .category-tag {
+            display: inline-block;
+            background: var(--secondary);
+            color: #fff;
+            padding: 2px 10px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 0.9rem;
+            letter-spacing: 1px;
+        }
+        .question-box {
+            margin: 1.1rem 0 2.2rem 0;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: questionIn 0.6s forwards;
+            animation-delay: 0.1s;
+        }
+        @keyframes questionIn {
+            to { opacity: 1; transform: translateY(0);}
+        }
+        .question-text {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 1.3rem;
+            line-height: 1.4;
+            color: #222;
+            text-shadow: 0 1px 0 #fff4;
+        }
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        .option-btn {
+            padding: 1.1rem 0.7rem;
+            border: 2px solid #e0e7ef;
+            border-radius: 14px;
+            background: #fff;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 700;
+            font-size: 1.05rem;
+            text-align: left;
+            box-shadow: 0 1px 8px #0001;
+            position: relative;
+            overflow: hidden;
+        }
+        .option-btn:hover:not(.disabled) {
+            border-color: var(--primary);
+            background: #f3f4f6;
+            color: var(--primary);
+            transform: scale(1.03);
+            z-index: 2;
+        }
+        .option-btn.correct {
+            background: #d1fae5;
+            border-color: var(--success);
+            color: var(--success);
+            animation: pulseCorrect 0.5s;
+        }
+        .option-btn.wrong {
+            background: #fee2e2;
+            border-color: var(--danger);
+            color: var(--danger);
+            animation: pulseWrong 0.5s;
+        }
+        @keyframes pulseCorrect {
+            0% { box-shadow: 0 0 0 0 var(--success); }
+            100% { box-shadow: 0 0 20px 10px #10b98133; }
+        }
+        @keyframes pulseWrong {
+            0% { box-shadow: 0 0 0 0 var(--danger);}
+            100% { box-shadow: 0 0 20px 10px #ef444433; }
+        }
+        .option-btn.disabled { pointer-events: none; opacity: 0.7; }
+        .motivation {
+            text-align: center;
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent);
+            margin: 1.2rem 0 0.5rem 0;
+            min-height: 1.2em;
+            letter-spacing: 0.5px;
+            animation: fadeMotivation 1.2s;
+        }
+        @keyframes fadeMotivation {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .leaderboard {
+            background: #fff6;
+            border-radius: 14px;
+            margin: 1.5rem 0 0.7rem 0;
+            padding: 1rem 1.2rem;
+            box-shadow: 0 2px 12px #0001;
+        }
+        .leaderboard h3 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+        .leaderboard-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .leaderboard-list li {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1rem;
+            padding: 2px 0;
+            border-bottom: 1px solid #eee8;
+        }
+        .leaderboard-list li:last-child { border-bottom: none; }
+
+        .score-board {
+            text-align: center;
+            padding: 2.5rem 1rem 1.5rem 1rem;
+            display: none;
+        }
+        .final-score {
+            font-size: 3.2rem;
+            font-weight: 900;
+            color: var(--primary);
+            margin: 1.1rem 0 0.5rem 0;
+            text-shadow: 0 2px 8px #6d28d966;
+        }
+        .score-message {
+            font-size: 1.25rem;
+            color: var(--secondary);
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+        }
+        .restart-btn {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            color: #fff;
+            border: none;
+            padding: 1rem 2.2rem;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 1.2rem;
+            box-shadow: 0 2px 16px #7c3aed33;
+            transition: transform 0.2s;
+        }
+        .restart-btn:hover {
+            transform: scale(1.05);
+        }
+        .confetti {
+            pointer-events: none;
+            position: absolute;
+            left: 0; top: 0; width: 100%; height: 100%;
+            z-index: 99;
+        }
+        .confetti-piece {
+            position: absolute;
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            opacity: 0.8;
+            animation: confetti-fall 2.2s linear forwards;
+        }
+        @keyframes confetti-fall {
+            to {
+                transform: translateY(480px) rotate(720deg);
+                opacity: 0.2;
+            }
+        }
+        @media (max-width: 600px) {
+            .quiz-container { padding: 1.2rem 0.2rem 1.2rem 0.2rem; }
+            .question-text { font-size: 1.07rem; }
+            .options-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <div class="header">
+            <div class="avatar" id="avatar"><i class="fas fa-user-astronaut"></i></div>
+            <div class="score-timer">
+                <div class="score">Score: <span id="scoreValue">0</span></div>
+                <div class="timer"><i class="fas fa-stopwatch"></i> <span id="timerValue">30</span>s</div>
+            </div>
+        </div>
+        <div class="progress-wrap">
+            <div class="progress-bar"><div class="progress" id="progress"></div></div>
+            <div class="question-count" id="questionCount">1/21</div>
+        </div>
+        <div class="category-tag" id="categoryTag"></div>
+        <div class="question-box" id="questionBox">
+            <div class="question-text" id="questionText"></div>
+            <div class="options-grid" id="optionsGrid"></div>
+        </div>
+        <div class="motivation" id="motivation"></div>
+        <div class="leaderboard" id="leaderboard">
+            <h3><i class="fas fa-trophy"></i> Leaderboard</h3>
+            <ol class="leaderboard-list" id="leaderboardList"></ol>
+        </div>
+        <div class="score-board" id="scoreBoard">
+            <h2>Quiz Complete!</h2>
+            <div class="final-score" id="finalScore">0</div>
+            <div class="score-message" id="scoreMessage"></div>
+            <button class="restart-btn" onclick="startQuiz()">Play Again</button>
+        </div>
+        <div class="confetti" id="confetti"></div>
+    </div>
+    <!-- Sound Effects -->
+    <audio id="audio-correct" src="https://cdn.pixabay.com/audio/2022/07/26/audio_124bfa7c2d.mp3"></audio>
+    <audio id="audio-wrong" src="https://cdn.pixabay.com/audio/2022/07/26/audio_124bfa7c2d.mp3"></audio>
+    <audio id="audio-finish" src="https://cdn.pixabay.com/audio/2022/03/15/audio_115b5c8f2b.mp3"></audio>
+    <script>
+        // --- Data ---
+        const avatars = [
+            '<i class="fas fa-user-astronaut"></i>',
+            '<i class="fas fa-robot"></i>',
+            '<i class="fas fa-cat"></i>',
+            '<i class="fas fa-dragon"></i>',
+            '<i class="fas fa-ghost"></i>',
+            '<i class="fas fa-otter"></i>',
+            '<i class="fas fa-crow"></i>',
+            '<i class="fas fa-hippo"></i>',
+            '<i class="fas fa-frog"></i>',
+        ];
+        const motivations = [
+            "You're on fire! 🔥",
+            "Keep it up! 🚀",
+            "Awesome job! 🌟",
+            "You got this! 💪",
+            "Brilliant! 🧠",
+            "Legendary! 🏆",
+            "Superb! 👏",
+            "Wow, impressive! 🤩",
+            "Unstoppable! 🦾",
+            "Keep crushing it! 💥",
+            "Nailed it! 🎯",
+            "Epic move! 😎"
+        ];
+        const categories = [
+            "Science", "Geography", "History", "Art", "Technology", "Sports", "Entertainment"
+        ];
+
+        const questions = [
+            { category: "Science", question: "Which planet is known as the Red Planet?", options: ["Venus", "Mars", "Jupiter", "Saturn"], answer: 1 },
+            { category: "Science", question: "What is the chemical symbol for gold?", options: ["Ag", "Fe", "Au", "Cu"], answer: 2 },
+            { category: "Art", question: "Who painted the Mona Lisa?", options: ["Van Gogh", "Picasso", "Da Vinci", "Rembrandt"], answer: 2 },
+            { category: "Geography", question: "What is the capital of Japan?", options: ["Beijing", "Seoul", "Tokyo", "Bangkok"], answer: 2 },
+            { category: "Science", question: "Which element has the atomic number 1?", options: ["Helium", "Hydrogen", "Oxygen", "Carbon"], answer: 1 },
+            { category: "History", question: "Who was the first President of the United States?", options: ["Abraham Lincoln", "George Washington", "John Adams", "Thomas Jefferson"], answer: 1 },
+            { category: "Technology", question: "What does 'CPU' stand for?", options: ["Central Processing Unit", "Computer Personal Unit", "Central Print Unit", "Control Panel Utility"], answer: 0 },
+            { category: "Sports", question: "How many players are there in a football (soccer) team?", options: ["10", "11", "12", "9"], answer: 1 },
+            { category: "Entertainment", question: "Which movie features the song 'Let It Go'?", options: ["Moana", "Frozen", "Tangled", "Coco"], answer: 1 },
+            { category: "Geography", question: "Mount Everest is located in which mountain range?", options: ["Andes", "Rockies", "Himalayas", "Alps"], answer: 2 },
+            { category: "Science", question: "What gas do plants absorb from the atmosphere?", options: ["Oxygen", "Nitrogen", "Carbon Dioxide", "Hydrogen"], answer: 2 },
+            { category: "History", question: "In which year did World War II end?", options: ["1942", "1945", "1939", "1950"], answer: 1 },
+            { category: "Art", question: "Which artist is famous for cutting off his own ear?", options: ["Monet", "Van Gogh", "Picasso", "Matisse"], answer: 1 },
+            { category: "Technology", question: "What does 'HTML' stand for?", options: ["Hyper Trainer Marking Language", "Hyper Text Markup Language", "Hyper Text Marketing Language", "Hyper Tool Markup Language"], answer: 1 },
+            { category: "Sports", question: "How many rings are there on the Olympic flag?", options: ["4", "5", "6", "7"], answer: 1 },
+            { category: "Entertainment", question: "Who is the author of 'Harry Potter'?", options: ["J.R.R. Tolkien", "J.K. Rowling", "Stephen King", "Suzanne Collins"], answer: 1 },
+            { category: "Geography", question: "Which is the largest ocean on Earth?", options: ["Indian", "Atlantic", "Arctic", "Pacific"], answer: 3 },
+            { category: "Science", question: "What is the hardest natural substance?", options: ["Gold", "Iron", "Diamond", "Quartz"], answer: 2 },
+            { category: "History", question: "Who discovered penicillin?", options: ["Alexander Fleming", "Marie Curie", "Isaac Newton", "Albert Einstein"], answer: 0 },
+            { category: "Art", question: "The Starry Night is a painting by which artist?", options: ["Van Gogh", "Monet", "Da Vinci", "Cezanne"], answer: 0 },
+            { category: "Technology", question: "What year was the first iPhone released?", options: ["2005", "2007", "2009", "2010"], answer: 1 }
+        ];
+
+        // --- Leaderboard (localStorage) ---
+        function getLeaderboard() {
+            try {
+                return JSON.parse(localStorage.getItem('quizLeaderboard') || '[]');
+            } catch { return []; }
+        }
+        function setLeaderboard(lb) {
+            localStorage.setItem('quizLeaderboard', JSON.stringify(lb));
+        }
+        function addLeaderboardEntry(score) {
+            let lb = getLeaderboard();
+            const now = new Date();
+            lb.push({ score, date: now.toLocaleDateString(), time: now.toLocaleTimeString() });
+            lb = lb.sort((a,b)=>b.score-a.score).slice(0,5);
+            setLeaderboard(lb);
+        }
+        function renderLeaderboard() {
+            const list = document.getElementById('leaderboardList');
+            const lb = getLeaderboard();
+            list.innerHTML = lb.length ? lb.map((e,i)=>`<li><span>🏅 ${i+1}.</span> <span>${e.score} pts</span></li>`).join('') : '<li>No scores yet.</li>';
+        }
+
+        // --- Quiz Logic ---
+        let quiz = {
+            q: [],
+            current: 0,
+            score: 0,
+            timeLeft: 30,
+            timerId: null,
+            avatar: 0
+        };
+
+        function shuffle(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+        }
+
+        function startQuiz() {
+            // Shuffle questions and options
+            quiz.q = questions.map(q => ({
+                ...q,
+                options: q.options.map((o,i)=>({text:o,idx:i}))
+            }));
+            shuffle(quiz.q);
+            quiz.q.forEach(q => shuffle(q.options));
+            quiz.current = 0;
+            quiz.score = 0;
+            quiz.avatar = Math.floor(Math.random()*avatars.length);
+            document.getElementById('avatar').innerHTML = avatars[quiz.avatar];
+            document.getElementById('scoreValue').textContent = 0;
+            document.getElementById('scoreBoard').style.display = 'none';
+            document.getElementById('questionBox').style.display = '';
+            document.getElementById('motivation').textContent = '';
+            document.getElementById('confetti').innerHTML = '';
+            showQuestion();
+            renderLeaderboard();
+        }
+
+        function showQuestion() {
+            const q = quiz.q[quiz.current];
+            document.getElementById('questionText').textContent = q.question;
+            document.getElementById('categoryTag').textContent = q.category;
+            document.getElementById('questionCount').textContent = `${quiz.current+1}/${quiz.q.length}`;
+            document.getElementById('motivation').textContent = '';
+            // Progress bar
+            document.getElementById('progress').style.width = `${((quiz.current)/quiz.q.length)*100}%`;
+
+            // Options
+            const grid = document.getElementById('optionsGrid');
+            grid.innerHTML = '';
+            q.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = opt.text;
+                btn.onclick = () => checkAnswer(opt.idx, btn, q.options.findIndex(o=>o.idx===q.answer));
+                grid.appendChild(btn);
+            });
+
+            // Timer
+            quiz.timeLeft = 30;
+            document.getElementById('timerValue').textContent = quiz.timeLeft;
+            if (quiz.timerId) clearInterval(quiz.timerId);
+            quiz.timerId = setInterval(() => {
+                quiz.timeLeft--;
+                document.getElementById('timerValue').textContent = quiz.timeLeft;
+                if (quiz.timeLeft <= 0) {
+                    clearInterval(quiz.timerId);
+                    showCorrect(q.options.findIndex(o=>o.idx===q.answer));
+                    setTimeout(nextQuestion, 1200);
+                }
+            }, 1000);
+        }
+
+        function checkAnswer(selectedIdx, btn, correctIdx) {
+            clearInterval(quiz.timerId);
+            const buttons = document.querySelectorAll('.option-btn');
+            buttons.forEach(b => b.classList.add('disabled'));
+            if (selectedIdx === quiz.q[quiz.current].answer) {
+                btn.classList.add('correct');
+                document.getElementById('scoreValue').textContent = quiz.score += (quiz.timeLeft*2+20);
+                playSound('correct');
+                document.getElementById('motivation').textContent = motivations[Math.floor(Math.random()*motivations.length)];
+                confettiBurst();
+            } else {
+                btn.classList.add('wrong');
+                buttons[correctIdx].classList.add('correct');
+                playSound('wrong');
+                document.getElementById('motivation').textContent = "Don't worry, keep going!";
+            }
+            setTimeout(nextQuestion, 1500);
+        }
+
+        function showCorrect(correctIdx) {
+            const buttons = document.querySelectorAll('.option-btn');
+            buttons.forEach((b,i)=>{
+                b.classList.add('disabled');
+                if (i === correctIdx) b.classList.add('correct');
+            });
+            playSound('wrong');
+            document.getElementById('motivation').textContent = "Time's up! ⏰";
+        }
+
+        function nextQuestion() {
+            quiz.current++;
+            if (quiz.current < quiz.q.length) {
+                document.getElementById('questionBox').style.opacity = 0;
+                setTimeout(() => {
+                    showQuestion();
+                    document.getElementById('questionBox').style.opacity = 1;
+                }, 300);
+            } else {
+                finishQuiz();
+            }
+        }
+
+        function finishQuiz() {
+            clearInterval(quiz.timerId);
+            document.getElementById('questionBox').style.display = 'none';
+            document.getElementById('scoreBoard').style.display = 'block';
+            document.getElementById('finalScore').textContent = quiz.score;
+            let msg = "";
+            if (quiz.score >= quiz.q.length*80) msg = "🎉 Incredible! You're a quiz master!";
+            else if (quiz.score >= quiz.q.length*60) msg = "🔥 Awesome! Great knowledge!";
+            else if (quiz.score >= quiz.q.length*40) msg = "👏 Good effort! Keep practicing!";
+            else msg = "💡 Don't give up! Try again!";
+            document.getElementById('scoreMessage').textContent = msg;
+            addLeaderboardEntry(quiz.score);
+            renderLeaderboard();
+            playSound('finish');
+            confettiBurst(60);
+            document.getElementById('progress').style.width = `100%`;
+        }
+
+        // --- Confetti ---
+        function confettiBurst(n=30) {
+            const colors = [ "#f59e42", "#06b6d4", "#6d28d9", "#10b981", "#ef4444", "#fbbf24" ];
+            const confetti = document.getElementById('confetti');
+            for (let i=0; i<n; i++) {
+                const c = document.createElement('div');
+                c.className = 'confetti-piece';
+                c.style.left = Math.random()*100+"%";
+                c.style.top = "-10px";
+                c.style.width = c.style.height = (Math.random()*10+8)+"px";
+                c.style.background = colors[Math.floor(Math.random()*colors.length)];
+                c.style.animationDuration = (Math.random()*1.2+1.2)+"s";
+                c.style.opacity = Math.random()*0.5+0.5;
+                confetti.appendChild(c);
+                setTimeout(()=>c.remove(), 2200);
+            }
+        }
+
+        // --- Sound ---
+        function playSound(type) {
+            try {
+                if (type === "correct") {
+                    let a = document.getElementById('audio-correct');
+                    a.currentTime = 0; a.play();
+                } else if (type === "wrong") {
+                    let a = document.getElementById('audio-wrong');
+                    a.currentTime = 0; a.play();
+                } else if (type === "finish") {
+                    let a = document.getElementById('audio-finish');
+                    a.currentTime = 0; a.play();
+                }
+            } catch {}
+        }
+
+        // --- Start ---
+        startQuiz();
+    </script>
+</body>
+</html>
